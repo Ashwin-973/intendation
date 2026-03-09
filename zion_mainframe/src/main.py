@@ -19,7 +19,7 @@ async def run_uplink():
 
 if __name__=="__main__":
     try:
-        asyncio.run()
+        asyncio.run(run_uplink())
     except Exception as e:
         print(f"Error at Main Program : {e}")
 
