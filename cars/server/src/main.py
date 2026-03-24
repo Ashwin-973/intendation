@@ -18,7 +18,7 @@ async def cars_lifespan():
 
     app.state.car_model=HEAVY_CAR_MODEL
 
-    yield None
+    yield None #yield X , X gets automatically attached to app.state
 
     print("[MAIN] Unloading Heavy Car Model")
 
@@ -30,7 +30,11 @@ def screening():
     return {"success":True,"message":"Welcome to Shelby American . Get Ready to dive into the world of fast,sexy and exotic cars . Buckle Up!!"}
 
 
-@app.get()
+@app.get("/health")
+def health_check():
+    return {"success":True,"message":"Application running smoothly"}
+
+
 
     
 
