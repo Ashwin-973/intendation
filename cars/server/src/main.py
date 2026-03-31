@@ -1,12 +1,16 @@
 import uvicorn
 import asyncio
 from fastapi import FastAPI,HTTPException,Depends
-from contexlib import asynccontextmanager
+from contextlib import asynccontextmanager
+
+from src.api import router
 
 app=FastAPI(title="Shelby American",
             version="1.0.0",
             docs_url="/docs",
             redoc_url="/redoc")
+
+app.include_router(router,prefix="/api/v1")
 
 @asynccontextmanager
 async def cars_lifespan():
@@ -37,11 +41,6 @@ def health_check():
 
 
     
-
-
-
-
-
 
 
 
