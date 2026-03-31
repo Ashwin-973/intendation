@@ -47,7 +47,7 @@ from fastapi import APIRouter,HTTPException,Depends
 
 
 from src.schemas import Car
-from src.api import get_db
+from src.db import get_db
 
 
 
