@@ -53,7 +53,47 @@ from src.db import get_db
 
 router=APIRouter()
 
-@router.get("/cars/{id}",response_model=list[Car])
+@router.get("/cars/{id}",response_model=Car)
 def get_car(id:int,db:list[dict]=Depends(get_db)):
     print("[ROUTER] GET /cars/id")
     return db[id]
+
+@router.get("/cars",response_model=list[Car])
+def get_all_cars(db:list[Car]=Depends(get_db)):
+    print("[ROUTER] GET /cars")
+    return db
+
+@router.post("/cars",response_model=Car)
+def create_car(car:Car,db:list[Car]=Depends(get_db)):
+    print("[ROUTER] POST /cars")
+    db.append(car)
+    return db[len(db) - 1]
+
+
+@router.put("/cars/{id}",response_model=Car)
+def update_car(id:int,car:Car,db:list[Car]=Depends(get_db)):
+    print("[ROUTER] PUT /cars")
+    print(id)
+    db[id]=car
+    return db[id]
+
+@router.patch("/cars/{id}",response_model=Car)
+def patch_car(id:int,name:str|None,brand:str|None,price:str|None,image_url:str|None,db:list[Car]=Depends(get_db)):
+    if not (name or brand or price or image_url):
+        raise HTTPException(400,detail="nothing to patch. incomplete info")
+    
+    new_car={
+        "id":db[id]["id"],
+        "name":name | db[id]["name"],
+        "brand":brand | db[id]["brand"],
+        "price":price | db[id]["price"],
+        "image_url":image_url | db[id]["price"]
+    }
+
+    db[id]=new_car
+
+    return db[id]
+
+
+    
+
