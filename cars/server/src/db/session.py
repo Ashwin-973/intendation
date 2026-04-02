@@ -1,10 +1,8 @@
 
-from data import CAR_DB
-from src.schemas import Car
 
-db=[Car(**car) for car in CAR_DB]
+from fastapi import Request
 
-def get_db():
+def get_db(req:Request):
     print("[DEPENEDNCIES] providing a route access to db")
-    yield db
+    yield req.app.state.db
     print("[DEPENEDNCIES] route handler finished execution")
