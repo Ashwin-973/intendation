@@ -1,57 +1,113 @@
-import uvicorn
-import asyncio
-from fastapi import FastAPI,HTTPException,Depends
+
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
 from src.api import router
-from src.schemas import Car
-from data import CAR_DB
+from src.logger import setup_logging,get_logger
+from src.middleware import (
+    ExceptionMiddleware,
+    pydantic_validation_exception_handler,
+    shelby_exception_handler,
+    generic_exception_handler
+)
+from src.exceptions import ShelbyBaseException
+from src.schemas import HealthResponse,ComponentHealth
 
-car_db=[Car(**car) for car in CAR_DB]
+'''BOOT LOGGING'''
+setup_logging("DEBUG")
+logger=get_logger(__name__)
 
+APP_VERSION="1.1.0"
+
+'''LIFESPAN'''
 @asynccontextmanager
-async def cars_lifespan(app:FastAPI):  #!lifespan expects a callable with the "app" argument
-    print("[MAIN] Loading Heavy Car Model")
-    print("[MAIN] Loading Car DB")
+def cars_lifespan(app:FastAPI)->AsyncIterator[None]:
+    logger.info("[MAIN] starting Shelby API server")
 
-    await asyncio.sleep(2)
+    logger.info("[MAIN] revving car engine...")
+    app.state.engine_loaded=True
+    app.state.app_version=APP_VERSION
 
-    HEAVY_CAR_MODEL:str="LOADED"
+    logger.info("[MAIN] car engine can melt balls of steel")
 
-    app.state.car_model=HEAVY_CAR_MODEL
-    app.state.db=car_db
+    yield 
 
-    yield None #yield X , X gets automatically attached to app.state
+    logger.info("[MAIN] closing the shelby garage")
+    app.state.engine_loaded=False
+    del app.state.app_version
 
-    print("[MAIN] Unloading Heavy Car Model")
-    print("[MAIN] Unloading Car DB")
-
-    HEAVY_CAR_MODEL:str="UNLOADED"
-    del app.state.db
+    logger.info("[MAIN] 7000+ RPM . goodbye")
 
 
+'''APPLICATION'''
 
-app=FastAPI(title="Shelby American",
-            version="1.0.0",
-            docs_url="/docs",
-            redoc_url="/redoc",
-            lifespan=cars_lifespan)
+def create_app()->FastAPI:
+    application=FastAPI(
+        title="Shelby American",
+        description="A gritty, passionate, and fast-paced California workshop",
+        version=app.state.app_version,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        lifespan=cars_lifespan
+    )
 
-app.include_router(router,prefix="/api/v1")
+    #middleware
+    application.add_middleware(ExceptionMiddleware) #! Note: Starlette middleware runs outermost-first (LIFO registration order)
 
-@app.get("/")
-def screening():
-    return {"success":True,"message":"Welcome to Shelby American . Get Ready to dive into the world of fast,sexy and exotic cars . Buckle Up!!"}
+    #exception handlers
+    application.add_exception_handler(RequestValidationError,pydantic_validation_exception_handler)
+    application.add_exception_handler(ShelbyBaseException,shelby_exception_handler)
+    application.add_exception_handler(Exception,generic_exception_handler)
 
+    #routers
+    application.include_router(router)
 
-@app.get("/health")
-def health_check():
-    return {"success":True,"message":"Application running smoothly"}
-
-
-
-
+    return application
 
 
-if __name__=="__main__":
-    uvicorn.run("src.main:app",port=7000,reload=True)
+
+
+app=create_app()
+
+
+'''HEALTH ENDPOINTS'''
+
+app.get("/",tags=["meta"],description="root endpoint")
+def welcome()->dict:
+    return {
+        "message": "Welcome to Shelby American . Get Ready to dive into the world of fast,sexy and exotic cars . Buckle Up!!",
+        "docs": "/docs",
+        "health": "/health",
+        "version": app.state.app_version,
+    }
+
+
+app.get("/health",response_model=HealthResponse)
+def health_check()->HealthResponse:
+
+    from data import CAR_DB
+
+    db_ok=True if CAR_DB is not None and isinstance(CAR_DB,list)
+    engine_ok=getattr(app.state,"engine_loaded",False)
+
+    components={
+        "database":ComponentHealth(
+            status="ok" if db_ok else "down",
+            message=f"{len(CAR_DB)} cars loaded" if db_ok else "CAR_DB is None"
+        ),
+        "engine":ComponentHealth(
+            status="ok" if engine_ok else "down"
+            message="engine ready" if engine_ok else "engine still revving"
+        )
+    }
+
+    overall="ok" if(c.status=="ok" for c in components) else "degraded"
+
+    return HealthResponse(
+        overall=overall,
+        version=app.state.app_version,
+        components=components
+    )
+    
