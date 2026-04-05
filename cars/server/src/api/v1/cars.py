@@ -3,10 +3,10 @@ from fastapi import APIRouter,Depends,Query,status
 from typing import Annotated
 
 
-from src.logger import get_logger
+from cars.server.src.logger import get_logger
 from src.schemas import CarResponse,CarCreate,CarUpdate
 from src.db import get_db
-from src.services import cars as car_collection
+from cars.server.src.services import cars1 as car_collection
 
 
 
@@ -94,7 +94,7 @@ def update_car(car_id:int,db:DB,car_payload:CarUpdate)->dict:
 
 '''PATCH'''
 
-#TODO : add a PATCH endpoint
+#TODO : add a PATCH endpoint with a responses model
 
 
 '''DELETE'''

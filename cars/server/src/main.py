@@ -1,18 +1,27 @@
 
+
+import uvicorn
+import sys
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
+'''# path bootstrap (so `data.py` at server root is importable)
+_server_root = Path(__file__).resolve().parents[1]
+if str(_server_root) not in sys.path:
+    sys.path.insert(0, str(_server_root))'''
+
 from src.api import router
-from src.logger import setup_logging,get_logger
-from src.middleware import (
+from cars.server.src.logger import setup_logging,get_logger
+from cars.server.src.middleware import (
     ExceptionMiddleware,
     pydantic_validation_exception_handler,
     shelby_exception_handler,
     generic_exception_handler
 )
-from src.exceptions import ShelbyBaseException
+from cars.server.src.exceptions import ShelbyBaseException
 from src.schemas import HealthResponse,ComponentHealth
 
 '''BOOT LOGGING'''
@@ -89,7 +98,7 @@ def health_check()->HealthResponse:
 
     from data import CAR_DB
 
-    db_ok=True if CAR_DB is not None and isinstance(CAR_DB,list)
+    db_ok=True if CAR_DB is not None and isinstance(CAR_DB,list) else False
     engine_ok=getattr(app.state,"engine_loaded",False)
 
     components={
@@ -98,7 +107,7 @@ def health_check()->HealthResponse:
             message=f"{len(CAR_DB)} cars loaded" if db_ok else "CAR_DB is None"
         ),
         "engine":ComponentHealth(
-            status="ok" if engine_ok else "down"
+            status="ok" if engine_ok else "down",
             message="engine ready" if engine_ok else "engine still revving"
         )
     }
@@ -111,3 +120,12 @@ def health_check()->HealthResponse:
         components=components
     )
     
+
+'''RUNNER'''
+
+if __name__=="__main__":
+    uvicorn.run(
+        app="src.app:app",
+        reload=True,
+        log_level="warning"
+    )

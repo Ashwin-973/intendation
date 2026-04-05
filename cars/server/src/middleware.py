@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response as StarletteResponse
 
-from src.exceptions import ShelbyBaseException
+from cars.server.src.exceptions1 import ShelbyBaseException
 from src.logger import get_logger
 from src.schemas import ErrorResponse
 

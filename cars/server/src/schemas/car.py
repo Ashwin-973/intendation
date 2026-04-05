@@ -93,8 +93,8 @@ class CarUpdate(BaseModel):
     price: str | None = Field(default=None)
     image_url: str | None = Field(default=None, max_length=2048)
 
-    @field_validator("name")
-    @classmethod
+    @field_validator("name") #*runs custom validation on a field after pydantic's built in validation
+    @classmethod #*all pydantic validators must be class methods and not instance methods 
     def clean_name(cls, v: str | None) -> str | None:
         return _validate_name(v) if v is not None else v
 
@@ -118,7 +118,7 @@ class CarUpdate(BaseModel):
             raise ValueError("image_url must be a valid HTTP/HTTPS URL.")
         return v
     
-    @model_validator(mode="after")
+    @model_validator(mode="after") #*validate the entire pydantic object
     def at_least_one_field(self)->CarUpdate:
         if all(
             getattr(self,f) is None for f in ("name", "brand", "price", "image_url")
@@ -131,7 +131,7 @@ class CarResponse(CarBase):
 
     id:int
 
-    model_config={"from attributes":True}
+    model_config={"from attributes":True} #! ORM object support,wtf does that mean?
 
 
 

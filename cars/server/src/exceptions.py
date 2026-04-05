@@ -28,7 +28,10 @@ class ShelbyBaseException(Exception):
 
         super().__init__(self.message)
 
-    def __repr__(self)->str:
+    def __repr__(self)->str:  #! how exactly does this work?
+        '''
+            printing the error looks like : ValidationException(status_code=400, error_code='VALIDATION_ERROR', message='The provided data is invalid')
+        '''
         return (
             f"{self.__class__.__name__}("
             f"status_code={self.status_code}, "
