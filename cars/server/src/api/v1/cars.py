@@ -3,10 +3,10 @@ from fastapi import APIRouter,Depends,Query,status
 from typing import Annotated
 
 
-from cars.server.src.logger import get_logger
+from src.logger import get_logger
 from src.schemas import CarResponse,CarCreate,CarUpdate
 from src.db import get_db
-from cars.server.src.services import cars1 as car_collection
+from src.services import cars as car_collection
 
 
 
@@ -45,7 +45,7 @@ def get_cars(
 
 
 '''GET'''
-
+#*exceptions raised inside route handlers are injected back into the dependency, after the yield point to get executed during the generator cleanup
 @router.get(
     "/{car_id}",
     response_model=CarResponse,
@@ -53,7 +53,7 @@ def get_cars(
     responses={
         404:{"detail":"Car not found"},
         429:{"detail":"Invalid car_id (not a positive integer)"}
-    })
+    }) 
 def get_car(car_id:int,db:DB)->dict:
     return car_collection.get_car(car_id=car_id,db=db)
 
@@ -89,7 +89,7 @@ def create_car(car_payload:CarCreate,db:DB)->dict:
     }
 )
 def update_car(car_id:int,db:DB,car_payload:CarUpdate)->dict:
-    return car_collection.update_car(car_id=car_id,car_payload=car_payload,db=db)
+    return car_collection.update_car(car_id=car_id,payload=car_payload,db=db)
 
 
 '''PATCH'''

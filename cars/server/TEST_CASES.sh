@@ -111,7 +111,7 @@ curl -s "$BASE_URL/api/v1/cars/5" | python3 -m json.tool
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 6. ERROR CASES – 404 Not Found
+# 6. ERROR CASES – 404 Not Found - TESTED!!
 # ─────────────────────────────────────────────────────────────────────
 
 # 6a. Get non-existent car (expect error_code: CAR_NOT_FOUND, 404)

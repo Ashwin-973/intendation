@@ -14,14 +14,14 @@ if str(_server_root) not in sys.path:
     sys.path.insert(0, str(_server_root))'''
 
 from src.api import router
-from cars.server.src.logger import setup_logging,get_logger
-from cars.server.src.middleware import (
+from src.logger import setup_logging,get_logger
+from src.middleware import (
     ExceptionMiddleware,
     pydantic_validation_exception_handler,
     shelby_exception_handler,
     generic_exception_handler
 )
-from cars.server.src.exceptions import ShelbyBaseException
+from src.exceptions import ShelbyBaseException
 from src.schemas import HealthResponse,ComponentHealth
 
 '''BOOT LOGGING'''
@@ -32,7 +32,7 @@ APP_VERSION="1.1.0"
 
 '''LIFESPAN'''
 @asynccontextmanager
-def cars_lifespan(app:FastAPI)->AsyncIterator[None]:
+async def cars_lifespan(app:FastAPI)->AsyncIterator[None]:
     logger.info("[MAIN] starting Shelby API server")
 
     logger.info("[MAIN] revving car engine...")
@@ -41,7 +41,7 @@ def cars_lifespan(app:FastAPI)->AsyncIterator[None]:
 
     logger.info("[MAIN] car engine can melt balls of steel")
 
-    yield 
+    yield None
 
     logger.info("[MAIN] closing the shelby garage")
     app.state.engine_loaded=False
@@ -56,7 +56,7 @@ def create_app()->FastAPI:
     application=FastAPI(
         title="Shelby American",
         description="A gritty, passionate, and fast-paced California workshop",
-        version=app.state.app_version,
+        version=APP_VERSION,
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=cars_lifespan
@@ -66,7 +66,7 @@ def create_app()->FastAPI:
     application.add_middleware(ExceptionMiddleware) #! Note: Starlette middleware runs outermost-first (LIFO registration order)
 
     #exception handlers
-    application.add_exception_handler(RequestValidationError,pydantic_validation_exception_handler)
+    application.add_exception_handler(RequestValidationError,pydantic_validation_exception_handler) #*exception handlers are called only if middleware fails to catch an exception or re-raises an exception
     application.add_exception_handler(ShelbyBaseException,shelby_exception_handler)
     application.add_exception_handler(Exception,generic_exception_handler)
 
@@ -83,7 +83,7 @@ app=create_app()
 
 '''HEALTH ENDPOINTS'''
 
-app.get("/",tags=["meta"],description="root endpoint")
+@app.get("/",tags=["meta"],description="root endpoint")
 def welcome()->dict:
     return {
         "message": "Welcome to Shelby American . Get Ready to dive into the world of fast,sexy and exotic cars . Buckle Up!!",
@@ -93,7 +93,7 @@ def welcome()->dict:
     }
 
 
-app.get("/health",response_model=HealthResponse)
+@app.get("/health",response_model=HealthResponse)
 def health_check()->HealthResponse:
 
     from data import CAR_DB
@@ -115,7 +115,7 @@ def health_check()->HealthResponse:
     overall="ok" if(c.status=="ok" for c in components) else "degraded"
 
     return HealthResponse(
-        overall=overall,
+        status=overall,
         version=app.state.app_version,
         components=components
     )
@@ -125,7 +125,7 @@ def health_check()->HealthResponse:
 
 if __name__=="__main__":
     uvicorn.run(
-        app="src.app:app",
+        app="src.main:app",
         reload=True,
         log_level="warning"
     )

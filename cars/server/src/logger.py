@@ -76,7 +76,7 @@ def setup_logging(level:str="INFO")->None:
     root.handlers.clear()
 
     handler=logging.StreamHandler(sys.stdout)
-    handler.setFormatter(ShelbyFormatter)
+    handler.setFormatter(ShelbyFormatter())
     root.addHandler(handler)
 
     #*silence noisy third-party loggers.

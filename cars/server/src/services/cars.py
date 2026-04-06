@@ -59,6 +59,8 @@ def list_cars(
 )->list[dict]:
     """return cars with optional filtering and pagination"""
 
+    print(f"offset {type(offset)} {offset} | limit {type(limit)} {limit} | ")
+
     results=list(db)
 
     if results and brand:
@@ -85,7 +87,7 @@ def list_cars(
     if results and offset>=len(results):
         return []
     
-    paginated=results[offset,offset+limit]
+    paginated=results[offset:offset+limit]
 
     logger.info(
         "listed cars",

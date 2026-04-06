@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response as StarletteResponse
 
-from cars.server.src.exceptions1 import ShelbyBaseException
+from src.exceptions import ShelbyBaseException
 from src.logger import get_logger
 from src.schemas import ErrorResponse
 
@@ -68,7 +68,7 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
         )
 
         try:
-            response:Response=await call_next(request)
+            response:Response=await call_next(request) #*call_next runs remaining stack: routing -> dependency resolution -> handler.
 
             logger.info(
                 "← %s %s [%d]",
@@ -83,24 +83,24 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
 
             return response
         
-        except ShelbyBaseException as exc:
-            logger.warning(
-                "Application exception: %s",
-                exc.message,
-                extra={
-                    "request_id":request_id,
-                    "error_code":exc.error_code,
-                    "status_code":exc.status_code,
-                    **exc.context         #!wtf is this?
-                }
-            )
-            return _build_error_response(
-                status_code=exc.status_code,
-                error_code=exc.error_code,
-                message=exc.message,
-                path=request.url.path,
-                detail=exc.detail
-            )
+        # except ShelbyBaseException as exc:
+        #     logger.warning(
+        #         "Application exception: %s",
+        #         exc.message,
+        #         extra={
+        #             "request_id":request_id,
+        #             "error_code":exc.error_code,
+        #             "status_code":exc.status_code,
+        #             **exc.context         #!wtf is this?
+        #         }
+        #     )
+        #     return _build_error_response(
+        #         status_code=exc.status_code,
+        #         error_code=exc.error_code,
+        #         message=exc.message,
+        #         path=request.url.path,
+        #         detail=exc.detail
+        #     )
         
         except Exception as exc:
 
@@ -120,7 +120,7 @@ class ExceptionMiddleware(BaseHTTPMiddleware):
                 status_code=500,
                 error_code="INTERNAL SERVER ERROR",
                 message="An unexpected internal error occurred. Please try again later.",
-                path=request.path.url,
+                path=request.url.path,
                 detail=None #!never leak tracebacks to clients.
             )
 
@@ -194,7 +194,6 @@ async def shelby_exception_handler(
     handles ShelbyBaseException raised inside FastAPI route handlers
     (before the middleware gets a chance to catch them).
     """
-
     logger.warning(
         "Application exception (handler): %s",
         exc.message,

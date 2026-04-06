@@ -10,7 +10,7 @@ from typing import Generator
 #     sys.path.insert(0, str(_root))
 
 from data import CAR_DB
-from src.exceptions import DatabaseException
+from src.exceptions import DatabaseException,ShelbyBaseException
 from src.logger import get_logger
 
 logger = get_logger(__name__)
@@ -33,10 +33,12 @@ def get_db()->Generator[list[dict],None,None]:
                 context={"db_type": "in-memory list"},
             )
         yield CAR_DB
-    except DatabaseException:
+    except DatabaseException: #?takeaway [don't know if it's right] : exceptions generated in dependency generators go directly to fastapi's app handler instead of getting caught by middleware
+        raise
+    except ShelbyBaseException:
         raise
     except Exception as exc:
-        logger.exception("Unexpected error while accessing the database", exc_info=exc)
+        # logger.exception("Unexpected error while accessing the database", exc_info=exc) #*prints the traceback automatically to the terminal
         raise DatabaseException(
             "Unexpected database access failure.",
             context={"original_error": str(exc)},
